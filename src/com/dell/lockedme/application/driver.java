@@ -1,5 +1,6 @@
 package com.dell.lockedme.application;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,6 +39,10 @@ public class driver {
 	}
 
 	public static void initApp() {
+		userList = new ArrayList<Users>();
+		usersCredList = new ArrayList<UserCreds>();
+		loggedInUser = new Users();
+		keyboard = new Scanner(System.in);
 		try {
 			File dbFile = new File(dbFilePath + dbFileName);
 			File dbPath = new File(dbFilePath);
@@ -51,40 +56,26 @@ public class driver {
 			if (!credsPath.exists()) {
 				credsPath.mkdirs();
 			}
-			loggedInUser = new Users();
-			// userCredentials = new UserCreds();
-
-			// if data available in file, then deserialize else empty object
+			
 			try {
 				FileInputStream file = new FileInputStream(dbFile);
+				// if data available in file, then deserialize else empty object
 				if (file.available() != 0) {
 					ObjectInputStream in = new ObjectInputStream(file);
 					ArrayList<Users> readObject = (ArrayList<Users>) in.readObject();
 					userList = readObject;
 					in.close();
 					file.close();
-				} else {
-					userList = new ArrayList<Users>();
 				}
 			} catch (IOException e) {
-				if (e.getClass().toString().equalsIgnoreCase("class java.io.StreamCorruptedException")) {
-					System.out.println("---------");
-					System.out.println("[Error][DB File corrupted]");
-					System.out.println("Deleting all existing users. Please register again");
-					PrintWriter writer = new PrintWriter(dbFile);
-					writer.print("");
-					writer.close();
-					System.out.println("---------");
-				} else {
-					System.out.println(e.getMessage());
-					System.out.println("---------");
-					e.printStackTrace();
-					System.out.println("---------");
-				}
+				System.out.println("---------");
+				System.out.println("[Error][DB File corrupted]");
+				System.out.println("Deleting all existing users. Please register again");
+				PrintWriter writer = new PrintWriter(dbFile);
+				writer.print("");
+				writer.close();
+				System.out.println("---------");
 			}
-			usersCredList = new ArrayList<UserCreds>();
-			// read data from keyboard
-			keyboard = new Scanner(System.in);
 
 		} catch (IOException e) {
 			System.out.println("404 : File Not Found ");
@@ -105,31 +96,26 @@ public class driver {
 	}
 
 	public static void signInOptions() {
-		try {
-			do {
-				welcomeScreen();
-				keyboard = new Scanner(System.in);
-				System.out.println("1 -> Registration ");
-				System.out.println("2 -> Login ");
-				System.out.println("3 -> Exit ");
-				String input = keyboard.next();
-				input = input.trim();
-				if (input.equals("1")) {
-					registerUser();
-				} else if (input.equals("2")) {
-					loginUser();
-				} else if (input.equals("3")) {
-					System.out.println("++  Thank you  ++");
-					keyboard.close();
-					System.exit(0);
-				} else {
-					System.out.println("Please select 1, 2 or 3");
-				}
-			} while (true);
-		} catch (InputMismatchException ex) {
-			System.out.println("[Error][Only 1, 2 or 3 input allowed]");
-		}
-		// input.close();
+		do {
+			welcomeScreen();
+			keyboard = new Scanner(System.in);
+			System.out.println("1 -> Registration ");
+			System.out.println("2 -> Login ");
+			System.out.println("3 -> Exit ");
+			String input = keyboard.nextLine();
+			input = input.trim();
+			if (input.equals("1")) {
+				registerUser();
+			} else if (input.equals("2")) {
+				loginUser();
+			} else if (input.equals("3")) {
+				System.out.println("++  Thank you  ++");
+				keyboard.close();
+				System.exit(0);
+			} else {
+				System.out.println("Please select 1, 2 or 3");
+			}
+		} while (true);
 	}
 
 	public static void registerUser() {
@@ -194,7 +180,7 @@ public class driver {
 		System.out.println("\n\n******************************************");
 		System.out.println("----------------  Login Page  ------------");
 		System.out.println("******************************************\n");
-
+		keyboard = new Scanner(System.in);
 		// Users user = new Users();
 		if (Objects.isNull(userList) || !userList.isEmpty()) {
 
@@ -231,78 +217,49 @@ public class driver {
 
 	public static void userCredsLockerOptions() {
 		keyboard = new Scanner(System.in);
-		// deserialise the file into obj
-		try {
-			File usercreds = new File(userCredsPath + loggedInUser.getUsername().toLowerCase() + ".txt");
-			if (usercreds.exists()) {
-				FileInputStream file = new FileInputStream(usercreds);
-				if (file.available() != 0) {
-					ObjectInputStream in = new ObjectInputStream(file);
-					ArrayList<UserCreds> readObject = (ArrayList<UserCreds>) in.readObject();
-					usersCredList = readObject;
-					in.close();
-					file.close();
-				} else {
-					usersCredList = new ArrayList<UserCreds>();
-				}
+		boolean goBack = false;
+		
+		readUserCedListFromFile();
+		
+		do {
+			goBack = false;
+			System.out.println("\n\n********************************************");
+			System.out.println();
+			System.out.println("        Welcome To LockedMe.com         ");
+			System.out.println("     Your Personal Digital Locker       ");
+			System.out.println("                                        ");
+			System.out.println("                 Logged In As: " + loggedInUser.getUsername());
+			System.out.println("********************************************\n");
+			System.out.println("1 -> Fetch all stored creds ");
+			System.out.println("2 -> Insert new credentials ");
+			System.out.println("3 -> Delete credentials ");
+			System.out.println("4 -> Go Back to login page ");
+			System.out.println("5 -> Exit ");
+			String input = keyboard.nextLine();
+			input = input.trim();
+			if (input.equals("1")) {
+				fetchCredentials();
+			} else if (input.equals("2")) {
+				storeCredentials();
+			} else if (input.equals("3")) {
+				deleteCredentials();
+			} else if (input.equals("4")) {
+				goBack = true;
+			} else if (input.equals("5")) {
+				System.out.println("++  Thank you  ++");
+				keyboard.close();
+				System.exit(0);
 			} else {
-				usercreds.createNewFile();
+				System.out.println("[Error][Only 1, 2, 3 or 4 input allowed]");
 			}
-			boolean goBack = false;
-			do {
-				goBack = false;
-				System.out.println("\n\n********************************************");
-				System.out.println();
-				System.out.println("        Welcome To LockedMe.com         ");
-				System.out.println("     Your Personal Digital Locker       ");
-				System.out.println("                                        ");
-				System.out.println("                 Logged In As: " + loggedInUser.getUsername());
-				System.out.println("********************************************\n");
-				System.out.println("1 -> Fetch all stored creds ");
-				System.out.println("2 -> Insert new credentials ");
-				System.out.println("3 -> Delete credentials ");
-				System.out.println("4 -> Go Back to login page ");
-				System.out.println("5 -> Exit ");
-				String input = keyboard.next();
-				input = input.trim();
-				if (input.equals("1")) {
-					fetchCredentials();
-				} else if (input.equals("2")) {
-					storeCredentials();
-				} else if (input.equals("3")) {
-					deleteCredentials();
-				} else if (input.equals("4")) {
-					goBack = true;
-				} else if (input.equals("5")) {
-					System.out.println("++  Thank you  ++");
-					keyboard.close();
-					System.exit(0);
-				} else {
-					System.out.println("[Error][Only 1, 2, 3 or 4 input allowed]");
-				}
-			} while (!goBack);
-			// lockerInput.close();
-		} catch (IOException e) {
-			if (e.getClass().toString().equalsIgnoreCase("class java.io.StreamCorruptedException")) {
-				System.out.println("---------");
-				System.out.println("User Creds File corrupted");
-				System.out.println("Deleting all creds. Please add creds again");
-				System.out.println("---------");
-			} else {
-				System.out.println(e.getMessage());
-				System.out.println("---------");
-				e.printStackTrace();
-				System.out.println("---------");
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InputMismatchException ex) {
-			System.out.println("[Error][Only following  1, 2, 3 or 4 is allowed");
-		}
+		} while (!goBack);
 	}
+
+	
 
 	// fetch credentials
 	public static void fetchCredentials() {
+		keyboard = new Scanner(System.in);
 		System.out.println("\n\n******************************************");
 		System.out.println("---------  User Stored Credentials -------");
 		System.out.println("                 Logged In As: " + loggedInUser.getUsername());
@@ -315,7 +272,7 @@ public class driver {
 		}
 		// traverse the list and show all the creds
 		else {
-			System.out.println("[SiteName] \t[UserName] \t[Password]");
+			System.out.println("[SiteName] \t\t[UserName] \t\t[Password]");
 			for (UserCreds uc : usersCredList) {
 				System.out.println(
 						"[" + uc.getSiteName() + "]\t\t[" + uc.getUsername() + "]\t\t[" + uc.getPassword() + "]");
@@ -328,6 +285,7 @@ public class driver {
 	// store credentails
 	public static void storeCredentials() {
 		UserCreds uc = new UserCreds();
+		keyboard = new Scanner(System.in);
 		System.out.println("\n\n******************************************");
 		System.out.println("---------  User Stored Credentials -------");
 		System.out.println("                 Logged In As: " + loggedInUser.getUsername());
@@ -356,6 +314,7 @@ public class driver {
 
 	public static void deleteCredentials() {
 		// UserCreds uc = new UserCreds();
+		keyboard = new Scanner(System.in);
 		System.out.println("\n\n******************************************");
 		System.out.println("----- Delete User Stored Credentials -----");
 		System.out.println("                 Logged In As: " + loggedInUser.getUsername());
@@ -376,21 +335,60 @@ public class driver {
 			boolean deleted = false;
 			do {
 				System.out.println("Type the site serial number to be deleted");
-				String siteNum = keyboard.next();
-				System.out.println(siteNum);
+				String siteNum = keyboard.nextLine();
+				siteNum.trim();
+				//System.out.println(siteNum);
 				if (options.stream().anyMatch(obj -> obj.equalsIgnoreCase(siteNum))) {
 					usersCredList.remove(Integer.parseInt(siteNum) - 1);
 					deleted = true;
+					saveUsersCredListToFile();
+					System.out.println("++ Deleted the site credentials ++");
 				} else {
-					System.out.println("Incorrect input provided");
+					System.out.println("["+siteNum+"] Incorrect input provided");
 				}
 			} while (!deleted);
-			saveUsersCredListToFile();
+			
 		} else {
-			System.out.println("-- No Credentials found to be deleted! --");
+			System.out.println("-- No Credentials found! --");
 		}
 		// Serialise back in file
 
+	}
+	
+	private static void readUserCedListFromFile() {
+		File usercreds = new File(userCredsPath + loggedInUser.getUsername().toLowerCase() + ".txt");
+		// deserialise the file into obj
+		try {
+			if (usercreds.exists()) {
+				FileInputStream file = new FileInputStream(usercreds);
+				if (file.available() != 0) {
+					ObjectInputStream in = new ObjectInputStream(file);
+					ArrayList<UserCreds> readObject = (ArrayList<UserCreds>) in.readObject();
+					usersCredList = readObject;
+					in.close();
+					file.close();
+				} else {
+					usersCredList = new ArrayList<UserCreds>();
+				}
+			} else {
+				usercreds.createNewFile();
+			}
+
+			// lockerInput.close();
+		} catch (IOException e) {
+			System.out.println("[Error] [User's Credential data corrupted]");
+			System.out.println("Deleting all creds. Please add creds again");
+			PrintWriter writer;
+			try {
+				writer = new PrintWriter(usercreds);
+				writer.print("");
+				writer.close();
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void saveUsersCredListToFile() {
