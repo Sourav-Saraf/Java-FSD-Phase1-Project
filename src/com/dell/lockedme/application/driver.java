@@ -36,19 +36,19 @@ public class driver {
 		initApp();
 		signInOptions();
 	}
-	
+
 	public static void initApp() {
 		try {
 			File dbFile = new File(dbFilePath + dbFileName);
 			File dbPath = new File(dbFilePath);
 			File credsPath = new File(userCredsPath);
-			if(!dbPath.exists()) {
+			if (!dbPath.exists()) {
 				dbPath.mkdirs();
 			}
 			if (!dbFile.exists()) {
 				dbFile.createNewFile();
 			}
-			if(!credsPath.exists()) {
+			if (!credsPath.exists()) {
 				credsPath.mkdirs();
 			}
 			loggedInUser = new Users();
@@ -69,7 +69,7 @@ public class driver {
 			} catch (IOException e) {
 				if (e.getClass().toString().equalsIgnoreCase("class java.io.StreamCorruptedException")) {
 					System.out.println("---------");
-					System.out.println("DB File corrupted");
+					System.out.println("[Error][DB File corrupted]");
 					System.out.println("Deleting all existing users. Please register again");
 					PrintWriter writer = new PrintWriter(dbFile);
 					writer.print("");
@@ -92,13 +92,14 @@ public class driver {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void welcomeScreen() {
 		System.out.println("********************************************");
 		System.out.println("**                                        **");
 		System.out.println("**        Welcome To LockedMe.com         **");
 		System.out.println("**     Your Personal Digital Locker       **");
 		System.out.println("**                                        **");
+		System.out.println("**                     By- Sourav Saraf   **");
 		System.out.println("********************************************\n");
 
 	}
@@ -111,23 +112,18 @@ public class driver {
 				System.out.println("1 -> Registration ");
 				System.out.println("2 -> Login ");
 				System.out.println("3 -> Exit ");
-				int input = keyboard.nextInt();
-				switch (input) {
-				case 1:
+				String input = keyboard.next();
+				input = input.trim();
+				if (input.equals("1")) {
 					registerUser();
-					//signInOptions();
-					break;
-				case 2:
+				} else if (input.equals("2")) {
 					loginUser();
-					break;
-				case 3:
+				} else if (input.equals("3")) {
 					System.out.println("++  Thank you  ++");
 					keyboard.close();
 					System.exit(0);
-					break;
-				default:
+				} else {
 					System.out.println("Please select 1, 2 or 3");
-					break;
 				}
 			} while (true);
 		} catch (InputMismatchException ex) {
@@ -154,13 +150,13 @@ public class driver {
 			// for pass
 			userExist = userList.stream().anyMatch(obj -> obj.getUsername().equalsIgnoreCase(username));
 			if (!username.matches("[a-zA-Z0-9]+")) {
-				System.out.println("-- Only alphabets or numbers allowed in username--\n");
+				System.out.println("-- Only alphabets or numbers allowed in username --\n");
 			} else if (userExist) {
-				System.out.println("-- Username taken. Please type another username--\n");
+				System.out.println("-- Username taken. Please type another username --\n");
 			}
-	
+
 		} while (userExist);
-	
+
 		// user.setUsername(username);
 		// minimum 6 char alphanumeric
 		do {
@@ -198,10 +194,10 @@ public class driver {
 		System.out.println("\n\n******************************************");
 		System.out.println("----------------  Login Page  ------------");
 		System.out.println("******************************************\n");
-	
+
 		// Users user = new Users();
 		if (Objects.isNull(userList) || !userList.isEmpty()) {
-	
+
 			boolean found = false, acceptedPass = false;
 			do {
 				System.out.println("Enter Username :");
@@ -228,8 +224,7 @@ public class driver {
 					System.out.println("-- User Not Found! Try again. --\n");
 				}
 			} while (!found);
-		}
-		else {
+		} else {
 			System.out.println("-- No registered users found. Register yourself first! --\n");
 		}
 	}
@@ -259,7 +254,7 @@ public class driver {
 				System.out.println("\n\n********************************************");
 				System.out.println();
 				System.out.println("        Welcome To LockedMe.com         ");
-				System.out.println("     Your Personal Digital Locaker      ");
+				System.out.println("     Your Personal Digital Locker       ");
 				System.out.println("                                        ");
 				System.out.println("                 Logged In As: " + loggedInUser.getUsername());
 				System.out.println("********************************************\n");
@@ -268,28 +263,22 @@ public class driver {
 				System.out.println("3 -> Delete credentials ");
 				System.out.println("4 -> Go Back to login page ");
 				System.out.println("5 -> Exit ");
-				int option = keyboard.nextInt();
-				switch (option) {
-				case 1:
+				String input = keyboard.next();
+				input = input.trim();
+				if (input.equals("1")) {
 					fetchCredentials();
-					break;
-				case 2:
+				} else if (input.equals("2")) {
 					storeCredentials();
-					break;
-				case 3:
+				} else if (input.equals("3")) {
 					deleteCredentials();
-					break;
-				case 4:
+				} else if (input.equals("4")) {
 					goBack = true;
-					break;
-				case 5:
+				} else if (input.equals("5")) {
 					System.out.println("++  Thank you  ++");
 					keyboard.close();
 					System.exit(0);
-					break;
-				default:
-					System.out.println("Please select 1, 2, 3 or 4");
-					break;
+				} else {
+					System.out.println("[Error][Only 1, 2, 3 or 4 input allowed]");
 				}
 			} while (!goBack);
 			// lockerInput.close();
@@ -333,7 +322,7 @@ public class driver {
 			}
 			// System.out.println(usersCredList.toString());
 		}
-	
+
 	}
 
 	// store credentails
@@ -405,9 +394,10 @@ public class driver {
 	}
 
 	private static void saveUsersCredListToFile() {
-		//To save loggedin users CredList in file
+		// To save loggedin users CredList in file
 		try {
-			FileOutputStream file = new FileOutputStream(userCredsPath + loggedInUser.getUsername().toLowerCase() + ".txt");
+			FileOutputStream file = new FileOutputStream(
+					userCredsPath + loggedInUser.getUsername().toLowerCase() + ".txt");
 			ObjectOutputStream out = new ObjectOutputStream(file);
 			out.writeObject(usersCredList);
 			out.close();
