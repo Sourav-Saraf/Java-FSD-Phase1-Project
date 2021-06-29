@@ -235,7 +235,7 @@ public class driver {
 			System.out.println("3 -> Delete credentials ");
 			System.out.println("4 -> Go Back to login page ");
 			System.out.println("5 -> Exit ");
-			String input = keyboard.nextLine();
+			String input = keyboard.next();
 			input = input.trim();
 			if (input.equals("1")) {
 				fetchCredentials();
